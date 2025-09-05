@@ -18,7 +18,7 @@ def YesOrNoQuestionCheck(answer: str, default: bool) -> bool:
         return False
     elif answer == '':
         return default
-    print(f'{Colors.RED}<Babel--> Invalid answer passed to final check in YesOrNoQuestionCheck()')
+    print(f'{Colors.RED}<BabelConfigSetup--> Invalid answer passed to final check in YesOrNoQuestionCheck()')
     raise ValueError
 
 class ConfigSetup:
@@ -33,66 +33,69 @@ class ConfigSetup:
                 'example_setting_2': 'c',
                 'example_setting_3': 'c',
 
-                'auto_sync': False,
-                'reconnect': False,
-                'client_secret': ''
+                'auto_sync'       : False,
+                'reconnect'       : False,
+                'token'           : '',
+                'prefix'          : ''
             }
 
-        self.EXITING_MESSAGE: str = f'{Colors.RED}<Babel--> Exiting{Colors.CLEAR}'
+        self.EXITING_MESSAGE: str = f'{Colors.RED}<BabelConfigSetup--> Exiting{Colors.CLEAR}'
 
         self.settings_to_write: dict = self.DEFAULT_SETTINGS
 
         if os.path.isfile(self.CONFIG_LOCATION):
-            print(f'{Colors.YELLOW}<Babel--> Config File Already Exists')
-            wipe_config_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Would you like to wipe the old config file and make a new one? (y/N): ')), False)
+            print(f'{Colors.YELLOW}<BabelConfigSetup--> Config File Already Exists')
+            wipe_config_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Would you like to wipe the old config file and make a new one? (y/N): ')), False)
             if wipe_config_question:
-                print(f'{Colors.GREEN}<Babel--> Deleting Old Config...')
+                print(f'{Colors.GREEN}<BabelConfigSetup--> Deleting Old Config...')
                 self.Delete_Old_Config()
                 pass
             elif not wipe_config_question:
-                print(f'{Colors.RED}<Babel--> Keeping Old Config...')
+                print(f'{Colors.RED}<BabelConfigSetup--> Keeping Old Config...')
                 print(self.EXITING_MESSAGE)
                 return
 
 
-        auto_sync_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Should the bot sync on launch? (y/N): ')), False)
+        auto_sync_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Should the bot sync on launch? (y/N): ')), False)
         if auto_sync_question:
             self.settings_to_write['auto_sync'] = True
-            print(f'{Colors.GREEN}<Babel--> Auto-sync: Enabled')
+            print(f'{Colors.GREEN}<BabelConfigSetup--> Auto-sync: Enabled')
         elif not auto_sync_question:
-            print(f'{Colors.RED}<Babel--> Auto-sync: Disabled')
+            print(f'{Colors.RED}<BabelConfigSetup--> Auto-sync: Disabled')
 
 
-        reconnect_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Should the bot attempt to reconnect if it loses connection? (Y/n): ')), True)
+        reconnect_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Should the bot attempt to reconnect if it loses connection? (Y/n): ')), True)
         if reconnect_question:
             self.settings_to_write['reconnect'] = True
-            print(f'{Colors.GREEN}<Babel--> Reconnect: Enabled')
+            print(f'{Colors.GREEN}<BabelConfigSetup--> Reconnect: Enabled')
         elif not reconnect_question:
-            print(f'{Colors.RED}<Babel--> Reconnect: Disabled')
+            print(f'{Colors.RED}<BabelConfigSetup--> Reconnect: Disabled')
 
-        client_token_input_as_file_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Get Client Secret from ./client_token.secret? Alternative is inputting the token directly into your terminal (not recommended) (Y/n): ')), True)
+        client_token_input_as_file_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Get Client Token from ./client_token.secret? Alternative is inputting the token directly into your terminal (not recommended) (Y/n): ')), True)
         if client_token_input_as_file_question:
             if not os.path.isfile('client_token.secret'):
-                print(f'{Colors.RED}<Babel--> client_token.secret not found')
+                print(f'{Colors.RED}<BabelConfigSetup--> client_token.secret not found')
                 print(Colors.CLEAR)
                 raise FileNotFoundError
 
             with open('client_token.secret') as opened_file:
-                self.settings_to_write['client_secret'] = opened_file.read()
-            print(f'{Colors.GREEN}<Babel--> Client Secret Set Via client_token.secret')
+                self.settings_to_write['token'] = opened_file.read()
+            print(f'{Colors.GREEN}<BabelConfigSetup--> Client Secret Set Via client_token.secret')
         elif not client_token_input_as_file_question:
-            self.settings_to_write['client_secret'] = str(getpass.getpass(f'{Colors.RED}<Babel--> Please Input Your Client Secret: '))
-            print(f'{Colors.RED}<Babel--> Client Secret Set Via Terminal')
+            self.settings_to_write['token'] = str(getpass.getpass(f'{Colors.RED}<BabelConfigSetup--> Please Input Your Client Token: '))
+            print(f'{Colors.RED}<BabelConfigSetup--> Client Secret Set Via Terminal')
 
-        print(f'{Colors.BLUE}<Babel--> Please ensure the settings above are to your preference.')
-        double_check_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Are you sure you want to write these settings to the config? (y/N): ')), False)
+        self.settings_to_write['prefix'] = str(input(f'{Colors.BLUE}<BabelConfigSetup--> Please Input The Automaton\'s prefix: '))
+
+        print(f'{Colors.BLUE}<BabelConfigSetup--> Please ensure the settings above are to your preference.')
+        double_check_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Are you sure you want to write these settings to the config? (y/N): ')), False)
         if double_check_question:
-            print(f'{Colors.GREEN}<Babel--> Writing Config...')
+            print(f'{Colors.GREEN}<BabelConfigSetup--> Writing Config...')
             self.Write_Config()
-            print(f'{Colors.GREEN}<Babel--> Config Written to {self.CONFIG_LOCATION}, Enjoy Babel_Automaton!')
+            print(f'{Colors.GREEN}<BabelConfigSetup--> Config Written to {self.CONFIG_LOCATION}, Enjoy Babel_Automaton!')
             print(self.EXITING_MESSAGE)
         else:
-            print(f'{Colors.RED}<Babel--> Not Writing Config File')
+            print(f'{Colors.RED}<BabelConfigSetup--> Not Writing Config File')
             print(self.EXITING_MESSAGE)
             return
 
