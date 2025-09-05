@@ -1,3 +1,4 @@
+import getpass
 import json
 import os
 
@@ -34,7 +35,7 @@ class ConfigSetup:
 
                 'auto_sync': False,
                 'reconnect': False,
-                '': False
+                'client_secret': ''
             }
 
         self.EXITING_MESSAGE: str = f'{Colors.RED}<Babel--> Exiting{Colors.CLEAR}'
@@ -69,8 +70,19 @@ class ConfigSetup:
         elif not reconnect_question:
             print(f'{Colors.RED}<Babel--> Reconnect: Disabled')
 
+        client_token_input_as_file_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Get Client Secret from ./client_token.secret? Alternative is inputting the token directly into your terminal (not recommended) (Y/n): ')), True)
+        if client_token_input_as_file_question:
+            if not os.path.isfile('client_token.secret'):
+                print(f'{Colors.RED}<Babel--> client_token.secret not found')
+                print(Colors.CLEAR)
+                raise FileNotFoundError
 
-        self.settings_to_write['example_setting_3'] = 'd'
+            with open('client_token.secret') as opened_file:
+                self.settings_to_write['client_secret'] = opened_file.read()
+            print(f'{Colors.GREEN}<Babel--> Client Secret Set Via client_token.secret')
+        elif not client_token_input_as_file_question:
+            self.settings_to_write['client_secret'] = str(getpass.getpass(f'{Colors.RED}<Babel--> Please Input Your Client Secret: '))
+            print(f'{Colors.RED}<Babel--> Client Secret Set Via Terminal')
 
         print(f'{Colors.BLUE}<Babel--> Please ensure the settings above are to your preference.')
         double_check_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<Babel--> Are you sure you want to write these settings to the config? (y/N): ')), False)
