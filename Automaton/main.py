@@ -34,7 +34,7 @@ async def on_ready():
     # To be Removed
 )
 async def test_command(interaction):
-    await interaction.response.send_message("ping-PONG")
+    await interaction.response.send_message("Changed for test push")
 
 
 if __name__ == '__main__':
