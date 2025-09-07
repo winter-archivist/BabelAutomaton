@@ -34,7 +34,7 @@ async def on_ready():
     # To be Removed
 )
 async def test_command(interaction):
-    await interaction.response.send_message("Changed for test push")
+    await interaction.response.send_message("Changed for test push #2")
 
 
 if __name__ == '__main__':
