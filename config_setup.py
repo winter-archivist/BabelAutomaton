@@ -71,7 +71,7 @@ class ConfigSetup:
         elif not reconnect_question:
             print(f'{Colors.RED}<BabelConfigSetup--> Reconnect: Disabled')
 
-        client_token_input_as_file_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Get Client Token from ./client_token.secret? Alternative is inputting the token directly into your terminal (not recommended) (Y/n): ')), True)
+        client_token_input_as_file_question: bool = YesOrNoQuestionCheck(str(input(f'{Colors.BLUE}<BabelConfigSetup--> Get Client Token from client_token.secret? Alternative is inputting the token directly into your terminal (not recommended) (Y/n): ')), True)
         if client_token_input_as_file_question:
             if not os.path.isfile('client_token.secret'):
                 print(f'{Colors.RED}<BabelConfigSetup--> client_token.secret not found')
