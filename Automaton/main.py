@@ -1,5 +1,7 @@
 import json
-import time
+
+import dictionary_manager
+import views
 
 import discord
 from discord import app_commands
@@ -20,22 +22,50 @@ tree = app_commands.CommandTree(automaton)
 
 @automaton.event
 async def on_ready():
-    print('--------Automaton Loading Began')
-    await tree.sync(guild=discord.Object(id=testing_guild_id))
+    print('Automaton Loading Began')
+
+    if auto_sync:
+        print('Auto-Sync is enabled, syncing...')
+        await tree.sync(guild=discord.Object(id=testing_guild_id))
+    else:
+        print('Auto-Sync is disabled, skipping sync...')
+
     await automaton.change_presence(status=discord.Status.online)
-    print('--------Bot Online')
+    print('Automaton Ready for Use')
 
+@tree.command(name="create_dictionary", description="Creates a new babel dictionary", guild=discord.Object(id=testing_guild_id))
+@discord.app_commands.describe(dictionary_name='Dictionary Name')
+@app_commands.choices(access_type=[
+    app_commands.Choice(name="Personal", value="personal"),
+    app_commands.Choice(name="Group", value="group")
+])
+async def create_dictionary_command(interaction: discord.Interaction, dictionary_name: str, access_type: app_commands.Choice[str]):
+    dictionary_manager.make_dictionary(dictionary_name, interaction.user.id, interaction.user.name, access_type.value)
 
-@tree.command(
-    name="test_command",
-    description="test command",
-    # To be Removed
-    guild=discord.Object(id=testing_guild_id)
-    # To be Removed
-)
-async def test_command(interaction):
-    await interaction.response.send_message("Changed for test push #2")
+    response_embed = discord.Embed(title='Dictionary Creation', description='', colour=0x00FF00)
+    response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
+    response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
 
+    response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
+    response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)
+    response_embed.add_field(name='Access Type:', value=access_type.value, inline=False)
+
+    await interaction.response.send_message(embed=response_embed)
+
+@tree.command(name="change_dictionary_access_type", description="Changes the access type of a target dictionary.", guild=discord.Object(id=testing_guild_id))
+@discord.app_commands.describe(dictionary_name='Dictionary Name')
+async def change_dictionary_access_type_command(interaction: discord.Interaction, dictionary_name: str):
+    response_embed = discord.Embed(title='Dictionary Access Type Changer', description='', colour=0x00FF00)
+    response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
+    response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
+
+    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
+
+    response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
+    response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)
+    response_embed.add_field(name='Current Access Type:', value=dictionary_data['Access_Type'], inline=False)
+
+    await interaction.response.send_message(embed=response_embed, view=views.Dictionary_Change_Access_Type_View(automaton, dictionary_name, interaction.user.id))
 
 if __name__ == '__main__':
     automaton.run(token=token, reconnect=reconnect)
