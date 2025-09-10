@@ -2,15 +2,6 @@ import dictionary_manager
 
 import discord
 
-def embed_builder(interaction, dictionary_data: dict) -> discord.Embed:
-    response_embed = discord.Embed(title='Dictionary Access Type Changer', description='', colour=0x00FF00)
-    response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
-    response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
-    response_embed.add_field(name='Dictionary Name:', value=dictionary_data['Name'], inline=False)
-    response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)
-    response_embed.add_field(name='Current Access Type:', value=dictionary_data['Access_Type'], inline=False)
-    return response_embed
-
 
 class Dictionary_Change_Access_Type_View(discord.ui.View):
     def __init__(self, automaton, dictionary_name: str, view_owner_id: int):
@@ -24,6 +15,16 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
             return True
         return False
 
+    async def embed_builder(interaction, dictionary_data: dict) -> discord.Embed:
+        response_embed = discord.Embed(title='Dictionary Access Type Changer', description='', colour=0x00FF00)
+        response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
+        response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
+        response_embed.add_field(name='Dictionary Name:', value=dictionary_data['Name'], inline=False)
+        response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})',
+                                 inline=False)
+        response_embed.add_field(name='Current Access Type:', value=dictionary_data['Access_Type'], inline=False)
+        return response_embed
+
     @discord.ui.button(label='Set Dictionary To Personal', style=discord.ButtonStyle.green, row=0)
     async def set_to_personal(self, interaction, button):
         if not self.interactor_is_owner_check(interaction.user.id):
@@ -32,7 +33,7 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
         dictionary_manager.change_dictionary_access_type(self.dictionary_name, self.view_owner_id, 'personal')
         dictionary_data: dict = dictionary_manager.get_dictionary_data(self.dictionary_name, self.view_owner_id)
 
-        await interaction.response.edit_message(embed=embed_builder(interaction, dictionary_data), view=self)
+        await interaction.response.edit_message(embed=await embed_builder(interaction, dictionary_data), view=self)
 
     @discord.ui.button(label='Set Dictionary To Group', style=discord.ButtonStyle.green, row=1)
     async def set_to_group(self, interaction, button):
@@ -42,4 +43,4 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
         dictionary_manager.change_dictionary_access_type(self.dictionary_name, self.view_owner_id, 'group')
         dictionary_data: dict = dictionary_manager.get_dictionary_data(self.dictionary_name, self.view_owner_id)
 
-        await interaction.response.edit_message(embed=embed_builder(interaction, dictionary_data), view=self)
+        await interaction.response.edit_message(embed=await embed_builder(interaction, dictionary_data), view=self)
