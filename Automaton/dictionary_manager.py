@@ -123,9 +123,10 @@ def give_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: in
     else:
         return
 
-    dictionary_data['Access_Users'][new_access_user_id] = {'read': True, 'write': False, share: False}
+    dictionary_data['Access_Users'][new_access_user_id] = {'read': True, 'write': False, 'share': False}
 
     update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
+
 
 def remove_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: int, remove_access_user_id: int) -> None:
     """
@@ -149,11 +150,14 @@ def remove_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: 
         return
 
     try:
-        if dictionary_data['Access_Users'][remove_access_user_id]:
+        if dictionary_data['Access_Users'][str(remove_access_user_id)]:
+            print(1)
             pass
     except KeyError:
+        print(f'Key {remove_access_user_id} was not found in {dictionary_data['Access_Users']}')
         return
+    print(3)
 
-    del dictionary_data['Access_Users'][remove_access_user_id]
+    del(dictionary_data['Access_Users'][str(remove_access_user_id)])
 
     update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)

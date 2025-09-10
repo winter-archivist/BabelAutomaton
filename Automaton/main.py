@@ -77,8 +77,8 @@ async def add_user_to_dictionary(interaction: discord.Interaction, dictionary_na
     response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
     response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
 
-    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
     dictionary_manager.give_user_access_to_dictionary(dictionary_name, interaction.user.id, user_id)
+    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
 
     response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
     response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)
@@ -97,8 +97,8 @@ async def remove_user_from_dictionary(interaction: discord.Interaction, dictiona
     response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
     response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
 
-    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
     dictionary_manager.remove_user_access_to_dictionary(dictionary_name, interaction.user.id, user_id)
+    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
 
     response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
     response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)

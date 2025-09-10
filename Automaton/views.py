@@ -15,7 +15,7 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
             return True
         return False
 
-    async def embed_builder(interaction, dictionary_data: dict) -> discord.Embed:
+    async def embed_builder(self, interaction, dictionary_data: dict) -> discord.Embed:
         response_embed = discord.Embed(title='Dictionary Access Type Changer', description='', colour=0x00FF00)
         response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
         response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
