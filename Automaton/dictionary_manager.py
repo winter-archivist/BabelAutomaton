@@ -94,11 +94,12 @@ def change_dictionary_access_type(dictionary_name: str, dictionary_owner_id: int
     return None
 
 
-def give_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: int) -> None:
+def give_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: int, new_access_user_id: int) -> None:
     """
 
     :param dictionary_name: Name of the dictionary
     :param dictionary_owner_id: Owner of the dictionary
+    :param new_access_user_id: The user id of the user being added to the dictionary
     :return: None
     """
 
@@ -113,4 +114,16 @@ def give_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: in
 
     if is_dictionary_private(dictionary_data):
         return
+
+    try:
+        if dictionary_data['Access_Users'][new_access_user_id]:
+            return
+    except KeyError:
+        pass
+    else:
+        return
+
+    dictionary_data['Access_Users'][new_access_user_id] = {'read': True, 'write': False, share: False}
+
+    update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
 

@@ -67,5 +67,25 @@ async def change_dictionary_access_type_command(interaction: discord.Interaction
 
     await interaction.response.send_message(embed=response_embed, view=views.Dictionary_Change_Access_Type_View(automaton, dictionary_name, interaction.user.id))
 
+@tree.command(name="add_user_to_dictionary", description="Gives a user access to a target dictionary.", guild=discord.Object(id=testing_guild_id))
+@discord.app_commands.describe(dictionary_name='Dictionary Name')
+@discord.app_commands.describe(user_id='User ID')
+async def add_user_to_dictionary(interaction: discord.Interaction, dictionary_name: str, user_id: str):
+    user_id = int(user_id)
+
+    response_embed = discord.Embed(title='Dictionary Access', description='', colour=0x00FF00)
+    response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
+    response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
+
+    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
+    dictionary_manager.give_user_access_to_dictionary(dictionary_name, interaction.user.id, user_id)
+
+    response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
+    response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)
+    response_embed.add_field(name='Current Access Type:', value=dictionary_data['Access_Type'], inline=False)
+    response_embed.add_field(name='Users with Access:', value=', '.join(dict(dictionary_data['Access_Users']).keys()), inline=False)
+
+    await interaction.response.send_message(embed=response_embed)
+
 if __name__ == '__main__':
     automaton.run(token=token, reconnect=reconnect)
