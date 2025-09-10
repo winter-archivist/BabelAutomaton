@@ -33,7 +33,7 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
         dictionary_manager.change_dictionary_access_type(self.dictionary_name, self.view_owner_id, 'personal')
         dictionary_data: dict = dictionary_manager.get_dictionary_data(self.dictionary_name, self.view_owner_id)
 
-        await interaction.response.edit_message(embed=await embed_builder(interaction, dictionary_data), view=self)
+        await interaction.response.edit_message(embed=await self.embed_builder(interaction, dictionary_data), view=self)
 
     @discord.ui.button(label='Set Dictionary To Group', style=discord.ButtonStyle.green, row=1)
     async def set_to_group(self, interaction, button):
@@ -43,4 +43,4 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
         dictionary_manager.change_dictionary_access_type(self.dictionary_name, self.view_owner_id, 'group')
         dictionary_data: dict = dictionary_manager.get_dictionary_data(self.dictionary_name, self.view_owner_id)
 
-        await interaction.response.edit_message(embed=await embed_builder(interaction, dictionary_data), view=self)
+        await interaction.response.edit_message(embed=await self.embed_builder(interaction, dictionary_data), view=self)
