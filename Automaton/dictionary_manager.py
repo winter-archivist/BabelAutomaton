@@ -151,12 +151,10 @@ def remove_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: 
 
     try:
         if dictionary_data['Access_Users'][str(remove_access_user_id)]:
-            print(1)
             pass
     except KeyError:
         print(f'Key {remove_access_user_id} was not found in {dictionary_data['Access_Users']}')
         return
-    print(3)
 
     del(dictionary_data['Access_Users'][str(remove_access_user_id)])
 
