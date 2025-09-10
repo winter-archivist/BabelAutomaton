@@ -127,3 +127,33 @@ def give_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: in
 
     update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
 
+def remove_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: int, remove_access_user_id: int) -> None:
+    """
+
+    :param dictionary_name: Name of the dictionary
+    :param dictionary_owner_id: Owner of the dictionary
+    :param remove_access_user_id: The user id of the user being removed access to the dictionary
+    :return: None
+    """
+
+    dictionary_directory: str = f'Automaton/dictionaries/{dictionary_owner_id}/'
+    dictionary_file: str = f'{dictionary_directory}{dictionary_name}.json'
+
+    if not os.path.isfile(dictionary_file):
+        return
+
+    with open(dictionary_file, "r") as json_file:
+        dictionary_data: dict = json.load(json_file)
+
+    if is_dictionary_private(dictionary_data):
+        return
+
+    try:
+        if dictionary_data['Access_Users'][remove_access_user_id]:
+            pass
+    except KeyError:
+        return
+
+    dictionary_data['Access_Users'][remove_access_user_id] = {'read': False, 'write': False, share: False}
+
+    update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)

@@ -87,5 +87,25 @@ async def add_user_to_dictionary(interaction: discord.Interaction, dictionary_na
 
     await interaction.response.send_message(embed=response_embed)
 
+@tree.command(name="remove_user_from_dictionary", description="Remove a user's access to a target dictionary.", guild=discord.Object(id=testing_guild_id))
+@discord.app_commands.describe(dictionary_name='Dictionary Name')
+@discord.app_commands.describe(user_id='User ID')
+async def remove_user_from_dictionary(interaction: discord.Interaction, dictionary_name: str, user_id: str):
+    user_id = int(user_id)
+
+    response_embed = discord.Embed(title='Dictionary Access', description='', colour=0x00FF00)
+    response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
+    response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
+
+    dictionary_data: dict = dictionary_manager.get_dictionary_data(dictionary_name, interaction.user.id)
+    dictionary_manager.remove_user_access_to_dictionary(dictionary_name, interaction.user.id, user_id)
+
+    response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
+    response_embed.add_field(name='Dictionary Owner:', value=f'{interaction.user.name}({interaction.user.id})', inline=False)
+    response_embed.add_field(name='Current Access Type:', value=dictionary_data['Access_Type'], inline=False)
+    response_embed.add_field(name='Users with Access:', value=', '.join(dict(dictionary_data['Access_Users']).keys()), inline=False)
+
+    await interaction.response.send_message(embed=response_embed)
+
 if __name__ == '__main__':
     automaton.run(token=token, reconnect=reconnect)
