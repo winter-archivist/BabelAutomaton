@@ -154,6 +154,6 @@ def remove_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: 
     except KeyError:
         return
 
-    dictionary_data['Access_Users'][remove_access_user_id] = {'read': False, 'write': False, share: False}
+    del dictionary_data['Access_Users'][remove_access_user_id]
 
     update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
