@@ -14,31 +14,148 @@ empty_dictionary: dict = \
         'Words': {}
     }
 
+class Dictionary_Manager:
+    def __init__(self, dictionary_name: str, dictionary_owner_id: int):
+        self.name: str = dictionary_name
+        self.owner_id: int = dictionary_owner_id
 
-def get_dictionary_data(dictionary_name: str, dictionary_owner_id: int) -> dict:
-    dictionary_directory: str = f'Automaton/dictionaries/{dictionary_owner_id}/'
-    dictionary_file: str = f'{dictionary_directory}{dictionary_name}.json'
+        self.directory: str = f'Automaton/dictionaries/{self.owner_id}/'
+        self.file: str = f'{self.directory}{self.name}.json'
 
-    if not os.path.isfile(dictionary_file):
-        raise FileNotFoundError
+        # TODO: proper exceptions
+        try:
+            if not os.path.isfile(self.file):
+                raise FileNotFoundError
 
-    with open(dictionary_file, "r") as json_file:
-        dictionary_data: dict = json.load(json_file)
+        except FileNotFoundError as error_message:
+            print(error_message)
 
-    return dictionary_data
+        except Exception as error_message:
+            print(error_message)
 
+        with open(self.file, "r") as json_file:
+            self.data: dict = json.load(json_file)
 
-def update_dictionary_data(dictionary_name: str, dictionary_owner_id: int, new_dictionary_data: dict) -> None:
-    dictionary_directory: str = f'Automaton/dictionaries/{dictionary_owner_id}/'
-    dictionary_file: str = f'{dictionary_directory}{dictionary_name}.json'
+    async def __dictionary_exist_check__(self):
+        # TODO: proper exceptions
+        try:
+            if not os.path.isfile(self.file):
+                raise FileNotFoundError
 
-    if not os.path.isfile(dictionary_file):
-        raise FileNotFoundError
+        except FileNotFoundError as error_message:
+            print(error_message)
 
-    with open(dictionary_file, "w") as operate_file:
-        json.dump(new_dictionary_data, operate_file)
+        except Exception as error_message:
+            print(error_message)
 
-    return None
+    async def __update_dictionary_data__(self) -> None:
+        await self.__dictionary_exist_check__()
+
+        # TODO: proper exceptions
+        with open(self.file, "w") as operate_file:
+            json.dump(self.data, operate_file)
+
+        return None
+
+    async def __user_access_check__(self, user_id_to_check: int, access_type_to_check_for: str) -> bool:
+        if access_type_to_check_for not in ('read', 'write', 'share'):
+            raise ValueError
+
+        if user_id_to_check == self.owner_id:
+            print('user is owner')
+            return True
+
+        for entry in self.data['User_Access']:
+            print(entry)
+            if entry == user_id_to_check:
+                print('user id found')
+                if entry[access_type_to_check_for]:
+                    print('valid access')
+                    return True
+        print('invalid access')
+        return False
+
+    async def __is_dictionary_private__(self) -> bool:
+        # TODO: proper logging
+        if self.data['Access_Type'] == 'group':
+            return False
+        else:
+            return True
+
+    async def change_dictionary_access_type(self, new_access_type: str) -> None:
+        # TODO: proper logging & exceptions
+
+        if new_access_type != 'personal' and new_access_type != 'group':
+            raise ValueError(f'Invalid Access Type ({new_access_type}) passed to change_dictionary_access_type()')
+
+        previous_access_type: str = self.data['Access_Type']
+
+        if self.data['Access_Type'] == 'personal':
+            self.data['Access_Type'] = 'group'
+        elif self.data['Access_Type'] == 'group':
+            self.data['Access_Type'] = 'personal'
+        else:
+            self.data['Access_Type'] = previous_access_type
+            raise Exception('Invalid Access Type read during change_dictionary_access_type()')
+
+        await self.__update_dictionary_data__()
+        return None
+
+    async def give_user_access_to_dictionary(self, interactor_id: int, new_access_user_id: int, new_access_user_name: str) -> None:
+        """
+        :param interactor_id: User running the command
+        :param new_access_user_id: The user id of the user being added to the dictionary
+        :param new_access_user_name: The username of the user being added to the dictionary
+        :return: None
+        """
+
+        if await self.__is_dictionary_private__():
+            raise NotImplementedError('Dictionary Private')
+
+        if not await self.__user_access_check__(interactor_id, 'share'):
+            raise NotImplementedError('User doesnt have share perms')
+
+        # TODO: check if the user is already in Access_Users
+
+        self.data['Access_Users'][new_access_user_id] = {'user': new_access_user_name, 'read': True, 'write': False, 'share': False}
+
+        await self.__update_dictionary_data__()
+
+    async def remove_user_access_to_dictionary(self, interactor_id: int, remove_access_user_id: int) -> None:
+        """
+        :param interactor_id: User running the command
+        :param remove_access_user_id: The user id of the user being removed access to the dictionary
+        :return: None
+        """
+
+        if await self.__is_dictionary_private__():
+            return
+
+        if not await self.__user_access_check__(interactor_id, 'share'):
+            return
+
+        try:
+            if self.data['Access_Users'][str(remove_access_user_id)]:
+                pass
+        except KeyError:
+            print(f'Key {remove_access_user_id} was not found in {self.data['Access_Users']}')
+            return
+
+        del(self.data['Access_Users'][str(remove_access_user_id)])
+        await self.__update_dictionary_data__()
+
+    async def add_word_to_dictionary(self, interactor_id: int, word_to_add: str, word_definition: str = 'No definition set.') -> None:
+        """
+        :param interactor_id: User running the command
+        :param word_to_add: Word to be added to the dictionary
+        :param word_definition: Word definition
+        :return: None
+        """
+        if not await self.__user_access_check__(interactor_id, 'share'):
+            return
+
+        self.data['Words'] = {word_to_add: word_definition}
+        await self.__update_dictionary_data__()
 
 
 def make_dictionary(name: str, creator_id: int, creator_user: str, access_type: str) -> None:
@@ -66,96 +183,3 @@ def make_dictionary(name: str, creator_id: int, creator_user: str, access_type: 
     if not os.path.isfile(dictionary_file):
         with open(dictionary_file, "w") as operate_file:
             json.dump(dictionary_to_write, operate_file)
-
-
-def is_dictionary_private(dictionary_data: dict) -> bool:
-    if dictionary_data['Access_Type'] == 'group':
-        return False
-    else:
-        return True
-    raise Exception('Invalid Access Type read during is_dictionary_private()')
-
-
-def change_dictionary_access_type(dictionary_name: str, dictionary_owner_id: int, new_access_type: str) -> None:
-
-    if new_access_type != 'personal' and new_access_type != 'group':
-        raise ValueError(f'Invalid Access Type ({new_access_type}) passed to change_dictionary_access_type()')
-
-    dictionary_data: dict = get_dictionary_data(dictionary_name, dictionary_owner_id)
-
-    if dictionary_data['Access_Type'] == 'personal':
-        dictionary_data['Access_Type'] = 'group'
-    elif dictionary_data['Access_Type'] == 'group':
-        dictionary_data['Access_Type'] = 'personal'
-    else:
-        raise Exception('Invalid Access Type read during change_dictionary_access_type()')
-
-    update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
-    return None
-
-
-def give_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: int, new_access_user_id: int) -> None:
-    """
-
-    :param dictionary_name: Name of the dictionary
-    :param dictionary_owner_id: Owner of the dictionary
-    :param new_access_user_id: The user id of the user being added to the dictionary
-    :return: None
-    """
-
-    dictionary_directory: str = f'Automaton/dictionaries/{dictionary_owner_id}/'
-    dictionary_file: str = f'{dictionary_directory}{dictionary_name}.json'
-
-    if not os.path.isfile(dictionary_file):
-        return
-
-    with open(dictionary_file, "r") as json_file:
-        dictionary_data: dict = json.load(json_file)
-
-    if is_dictionary_private(dictionary_data):
-        return
-
-    try:
-        if dictionary_data['Access_Users'][new_access_user_id]:
-            return
-    except KeyError:
-        pass
-    else:
-        return
-
-    dictionary_data['Access_Users'][new_access_user_id] = {'read': True, 'write': False, 'share': False}
-
-    update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
-
-
-def remove_user_access_to_dictionary(dictionary_name: str, dictionary_owner_id: int, remove_access_user_id: int) -> None:
-    """
-
-    :param dictionary_name: Name of the dictionary
-    :param dictionary_owner_id: Owner of the dictionary
-    :param remove_access_user_id: The user id of the user being removed access to the dictionary
-    :return: None
-    """
-
-    dictionary_directory: str = f'Automaton/dictionaries/{dictionary_owner_id}/'
-    dictionary_file: str = f'{dictionary_directory}{dictionary_name}.json'
-
-    if not os.path.isfile(dictionary_file):
-        return
-
-    with open(dictionary_file, "r") as json_file:
-        dictionary_data: dict = json.load(json_file)
-
-    if is_dictionary_private(dictionary_data):
-        return
-
-    try:
-        if dictionary_data['Access_Users'][str(remove_access_user_id)]:
-            pass
-    except KeyError:
-        print(f'Key {remove_access_user_id} was not found in {dictionary_data['Access_Users']}')
-        return
-
-    del(dictionary_data['Access_Users'][str(remove_access_user_id)])
-
-    update_dictionary_data(dictionary_name, dictionary_owner_id, dictionary_data)
