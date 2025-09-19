@@ -23,12 +23,13 @@ intents = discord.Intents.all()
 automaton = discord.Client(intents=intents)
 tree = app_commands.CommandTree(automaton)
 
-def __user_access_change_embed_builder__(interaction, Dictionary_Manager) -> discord.Embed:
+async def __user_access_change_embed_builder__(interaction, Dictionary_Manager) -> discord.Embed:
     embed = discord.Embed(title='Dictionary Access', description='', colour=0x00FF00)
     embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
     embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
     embed.add_field(name='Dictionary Name:', value=Dictionary_Manager.name, inline=False)
     embed.add_field(name='Dictionary Owner:', value=f'{Dictionary_Manager.data['Creator']['user']} ({Dictionary_Manager.data['Creator']['id']})', inline=False)
+    embed.add_field(name='Users With Access:', value=', '.join(await Dictionary_Manager.all_access_users()), inline=False)
     return embed
 
 @automaton.event
@@ -85,7 +86,7 @@ async def change_dictionary_access_type_command(interaction: discord.Interaction
 async def add_user_to_dictionary(interaction: discord.Interaction, dictionary_name: str, dictionary_owner_id: str, user_id: str, user_name: str):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(dictionary_name, int(dictionary_owner_id))
     await Dictionary_Manager.give_user_access_to_dictionary(interaction.user.id, int(user_id), user_name)
-    await interaction.response.send_message(embed=__user_access_change_embed_builder__(interaction, Dictionary_Manager))
+    await interaction.response.send_message(embed=await __user_access_change_embed_builder__(interaction, Dictionary_Manager))
 
 @tree.command(name="remove_user_from_dictionary", description="Remove a user's access to a target dictionary.", guild=discord.Object(id=testing_guild_id))
 @discord.app_commands.describe(dictionary_name='Dictionary Name')
@@ -94,7 +95,7 @@ async def add_user_to_dictionary(interaction: discord.Interaction, dictionary_na
 async def remove_user_from_dictionary(interaction: discord.Interaction, dictionary_name: str, dictionary_owner_id: str, user_id: str):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(dictionary_name, int(dictionary_owner_id))
     await Dictionary_Manager.remove_user_access_to_dictionary(interaction.user.id, int(user_id))
-    await interaction.response.send_message(embed=__user_access_change_embed_builder__(interaction, Dictionary_Manager))
+    await interaction.response.send_message(embed=await __user_access_change_embed_builder__(interaction, Dictionary_Manager))
 
 @tree.command(name="add_word_to_dictionary", description="Adds a word to a target dictionary.", guild=discord.Object(id=testing_guild_id))
 @discord.app_commands.describe(dictionary_name='Dictionary Name')

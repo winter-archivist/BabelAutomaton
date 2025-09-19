@@ -82,6 +82,45 @@ class Dictionary_Manager:
         else:
             return True
 
+    async def all_access_users(self) -> list:
+        access_users: list = []
+        for access_id in self.data['Access_Users']:
+            access_users.append(self.data['Access_Users'][access_id]['user'])
+        return access_users
+
+    # ------ #
+    # I don't know if these will be needed, but I might as well write them now
+    async def all_read_access_users(self) -> list:
+        read_access_users: list = []
+        for access_id in self.data['Access_Users']:
+
+            if read_access_users.append(self.data['Access_Users'][access_id]['read']):
+                continue
+
+            read_access_users.append(self.data['Access_Users'][access_id]['user'])
+        return read_access_users
+
+    async def all_write_access_users(self) -> list:
+        write_access_users: list = []
+        for access_id in self.data['Access_Users']:
+
+            if write_access_users.append(self.data['Access_Users'][access_id]['write']):
+                continue
+
+            write_access_users.append(self.data['Access_Users'][access_id]['user'])
+        return write_access_users
+
+    async def all_share_access_users(self) -> list:
+        share_access_users: list = []
+        for access_id in self.data['Access_Users']:
+
+            if share_access_users.append(self.data['Access_Users'][access_id]['share']):
+                continue
+
+            share_access_users.append(self.data['Access_Users'][access_id]['user'])
+        return share_access_users
+    # ------ #
+
     async def change_dictionary_access_type(self, new_access_type: str) -> None:
         # TODO: proper logging & exceptions
 
