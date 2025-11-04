@@ -44,6 +44,8 @@ Once in the venv, run this once to install all requirements
 Before running the automaton make sure to setup its config
     python3 config_setup.py
 
+Once the config is generated, ensure the automaton's token is in a file named ".client.secret" in the Automaton/ directory
+
 Once in venv, run this to run the actual Automaton
     python3 main.py
 #-----------#

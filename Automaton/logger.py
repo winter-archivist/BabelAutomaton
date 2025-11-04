@@ -41,8 +41,8 @@ class Logger:
                 log_level: str = 'warn'
                 log_color: str = Colors.YELLOW
 
-            case 'positive' | 'pos' | 'p':
-                log_level: str = 'positive'
+            case 'success' | 'scs' | 's':
+                log_level: str = 'success'
                 log_color: str = Colors.GREEN
 
             case 'info' | 'inf' | 'i':

@@ -1,4 +1,5 @@
 import json
+import os
 
 import dictionary_manager
 import views
@@ -8,14 +9,29 @@ from discord import app_commands
 
 # TODO:
     # fix the 'share' perm check so that others can share the dictionary
+    # allow users to set a target dictionary for all other commands so they don't need the dict name & owner id every time
+    # add_word_to_dictionary should also have an optional entry for definitions
 
+from logger import Logger
+LOGGER = Logger()
+source: str = 'Main'
 
-with open('Automaton/config.json', 'r') as opened_file:
-    config: dict = json.load(opened_file)
+CONFIG_LOCATION: str = ''
+if os.path.isfile('Automaton/config.json'):
+    with open('Automaton/config.json', 'r') as opened_file:
+        config: dict = json.load(opened_file)
+else:
+    logger.log('critical', 'main', '"Automaton/config.json" not found in Automaton/, please reread README.')
+
+if os.path.isfile('Automaton/.client.secret'):
+    with open('Automaton/.client.secret', 'r') as opened_file:
+        token: str = opened_file.read()
+else:
+    logger.log('critical', 'main', '".client.secret" not found in Automaton/, please reread README.')
+
 auto_sync: bool = config['auto_sync']
 reconnect: bool = config['reconnect']
 prefix: str = config['prefix']
-token: str = config['token']
 
 testing_guild_id: int = 601192368489758731
 
@@ -34,16 +50,16 @@ async def __user_access_change_embed_builder__(interaction, Dictionary_Manager) 
 
 @automaton.event
 async def on_ready():
-    print('Automaton Loading Began')
+    LOGGER.log('info', f'{source}.on_read()', 'Automaton Loading Began')
 
     if auto_sync:
-        print('Auto-Sync is enabled, syncing...')
+        LOGGER.log('info', f'{source}.on_read()', 'Auto-Sync is enabled, syncing...')
         await tree.sync(guild=discord.Object(id=testing_guild_id))
     else:
-        print('Auto-Sync is disabled, skipping sync...')
+        LOGGER.log('info', f'{source}.on_read()', 'Auto-Sync is disabled, skipping sync...')
 
     await automaton.change_presence(status=discord.Status.online)
-    print('Automaton Ready for Use')
+    LOGGER.log('success', f'{source}.on_read()', 'Automaton Ready for Use')
 
 @tree.command(name="create_dictionary", description="Creates a new babel dictionary", guild=discord.Object(id=testing_guild_id))
 @discord.app_commands.describe(dictionary_name='Dictionary Name')
@@ -110,10 +126,32 @@ async def add_word_to_dictionary(interaction: discord.Interaction, dictionary_na
     response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
     response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
     response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
-    response_embed.add_field(name='Dictionary Owner:', value=f'{Dictionary_Manager.data['Creator']['user']}{Dictionary_Manager.data['Creator']['id']}', inline=False)
+    response_embed.add_field(name='Dictionary Owner:', value=f'{Dictionary_Manager.data['Creator']['user']}({Dictionary_Manager.data['Creator']['id']})', inline=False)
     response_embed.add_field(name='Current Words In Dictionary:', value=Dictionary_Manager.data['Words'], inline=False)
 
     await interaction.response.send_message(embed=response_embed)
+
+
+# TODO: ------ remove word from dictionary ---- #
+
+
+@tree.command(name="get_random_word_from_dictionary", description="Gets a random word from a target dictionary.", guild=discord.Object(id=testing_guild_id))
+@discord.app_commands.describe(dictionary_name='Dictionary Name')
+@discord.app_commands.describe(dictionary_owner_id='Dictionary Owner ID')
+async def get_random_word_from_dictionary(interaction: discord.Interaction, dictionary_name: str, dictionary_owner_id: str):
+    dictionary_owner_id: int = int(dictionary_owner_id)
+    Dictionary_Manager = dictionary_manager.Dictionary_Manager(dictionary_name, dictionary_owner_id)
+    random_word: str = await Dictionary_Manager.get_random_word_from_dictionary(interaction.user.id)
+
+    response_embed = discord.Embed(title='Dictionary', description='', colour=0x00FF00)
+    response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
+    response_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
+    response_embed.add_field(name='Dictionary Name:', value=dictionary_name, inline=False)
+    response_embed.add_field(name='Dictionary Owner:', value=f'{Dictionary_Manager.data['Creator']['user']}({Dictionary_Manager.data['Creator']['id']})', inline=False)
+    response_embed.add_field(name='Random Word:', value=random_word, inline=False)
+
+    await interaction.response.send_message(embed=response_embed)
+
 
 if __name__ == '__main__':
     automaton.run(token=token, reconnect=reconnect)
