@@ -2,16 +2,12 @@
 Project Description
 #-----------#
 A GNU GPL v3 Licensed Discord Bot made for a friend to be used as a language learning assistant for a college group learning American Sign Language.
-You, or a group, can make a dictionary, or multiple dictionaries, of words that you can then get a random word from.
+This project will never use AI in any way shape or form.
+
+You, or a group, can make a dictionary, or multiple dictionaries, of words that you can then get a random word from as well as assign definitions to said words
 
 In most comments/description you'll see me using the word "Automaton" to describe the bot, this is purely because I like the word Automaton. :)
 I am using this project as a way to teach/reteach myself some things, if you have any feedback please see the contact section of the README.
-
-#-----------#
-Project Goals
-#-----------#
-Individual & Group ID Based Dictionaries
-Dictionary Selection so you can do this for multiple languages
 
 #-----------#
 Contact
@@ -23,29 +19,33 @@ Email   : ashen_entropy@proton.me
 #-----------#
 SETUP GUIDE
 #-----------#
-The following package assumes that you're running on Ubuntu, or its derivatives like Kubuntu, Xubuntu, Mint, etc.
+The following provides guidance for both Debian or Arch. I have personally tested this on Ubuntu & EndeavourOS.
 
 Update your system, this may take a while depending on your system & connection
-    sudo apt update && sudo apt upgrade
+Debian:    sudo apt update && sudo apt upgrade
+Arch:      sudo pacman -Syu
 
-Install python3
-    sudo apt install python3
+Install python & pip for your distro
+Debian:    sudo apt install python3 python3-pip
+Arch:      sudo pacman -S python python-pip
+Moving forward if a command says "python" and you're on Debian use "python3" instead.
 
-cd into Babel_Automaton
+cd into BabelAutomaton/
 Run this once to make the virtual environment, I prefer .venv
-    python3 -m venv .venv
+    python -m venv .venv
 
 To enter the venv run
     source .venv/bin/activate
 
-Once in the venv, run this once to install all requirements
-    python3 -m pip install -r requirements.txt
+Once in the virtual environment, run this once to install all requirements
+    python -m pip install -r requirements.txt
 
-Before running the automaton make sure to setup its config
-    python3 config_setup.py
+Before running the automaton make sure to run config_setup.py
+    python config_setup.py
 
 Once the config is generated, ensure the automaton's token is in a file named ".client.secret" in the Automaton/ directory
+The client's token is found under the Bot section of the discord dev portal. !DO NOT SHARE THIS TOKEN!
 
-Once in venv, run this to run the actual Automaton
-    python3 main.py
+Once in the virtual environment, run this to run the actual Automaton
+    python Automaton/main.py
 #-----------#

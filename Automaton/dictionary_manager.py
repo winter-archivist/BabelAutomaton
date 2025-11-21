@@ -1,5 +1,6 @@
 import os
 import json
+import uuid
 import random
 
 from logger import Logger
@@ -8,8 +9,9 @@ source: str = 'dictionary_manager'
 
 empty_dictionary: dict = \
     {
+        'uuid': '',
         'Name': '',
-        'Creator':
+        'Owner':
             {
                 'id': '',
                 'user': ''
@@ -19,15 +21,67 @@ empty_dictionary: dict = \
         'Words': {}
     }
 
+
+def make_dictionary(name: str, owner_id: int, owner_user: str, access_type: str) -> str:
+    """
+    :param name: Name of the Dictionary
+    :param owner_id: ID of the user making the dictionary
+    :param owner_user: Username of the user making the dictionary
+    :param access_type: Personal or Group
+    :return: None
+    """
+
+    base_dictionary_directory: str = 'Automaton/dictionaries/'
+    if not os.path.isdir(base_dictionary_directory):
+        os.mkdir(base_dictionary_directory)
+
+    dictionary_uuid: str = str(uuid.uuid4())
+
+    dictionary_to_write: dict = empty_dictionary
+    dictionary_to_write['uuid'] = dictionary_uuid
+    dictionary_to_write['Name'] = name
+    dictionary_to_write['Owner']['id'] = owner_id
+    dictionary_to_write['Owner']['user'] = owner_user
+    dictionary_to_write['Access_Type'] = access_type
+
+    dictionary_file: str = f'Automaton/dictionaries/{dictionary_uuid}.json'
+
+    with open(dictionary_file, "w") as operate_file:
+        json.dump(dictionary_to_write, operate_file)
+
+    return dictionary_uuid
+
+
+def set_users_target_dictionary_uuid(user_id: int, dictionary_uuid: str) -> None:
+    user_directory: str = f'Automaton/dictionaries/{user_id}'
+    if not os.path.isdir(user_directory):
+        os.mkdir(user_directory)
+
+    target_dictionary_file: str = f'Automaton/dictionaries/{user_id}/target_dictionary.json'
+    with open(target_dictionary_file, "w") as open_file:
+        open_file.write(dictionary_uuid)
+
+    return None
+
+
+def get_users_target_dictionary_uuid(user_id: int) -> str:
+    target_dictionary_file: str = f'Automaton/dictionaries/{user_id}/target_dictionary.json'
+    if os.path.isfile(target_dictionary_file):
+        with open(target_dictionary_file, "r") as open_file:
+            data: str = open_file.read()
+            LOGGER.log('debug', f'{source}.get_users_target_dictionary_uuid()', f'Data Found: {data}')
+    else:
+        LOGGER.log('warn', f'{source}.get_users_target_dictionary_uuid()', '"target_dictionary_file" not found, please ensure the user has set a target dictionary already.')
+        raise FileNotFoundError
+
+    return data
+
+
 class Dictionary_Manager:
-    def __init__(self, dictionary_name: str, dictionary_owner_id: int):
-        self.name: str = dictionary_name
-        self.owner_id: int = dictionary_owner_id
+    def __init__(self, interactor_id):
+        target_dictionary_uuid: str = get_users_target_dictionary_uuid(interactor_id)
+        self.file: str = f'Automaton/dictionaries/{target_dictionary_uuid}.json'
 
-        self.directory: str = f'Automaton/dictionaries/{self.owner_id}/'
-        self.file: str = f'{self.directory}{self.name}.json'
-
-        # TODO: proper exceptions
         try:
             if not os.path.isfile(self.file):
                 raise FileNotFoundError
@@ -66,19 +120,14 @@ class Dictionary_Manager:
         if access_type_to_check_for not in ('read', 'write', 'share'):
             raise ValueError
 
-        if user_id_to_check == self.owner_id:
-            LOGGER.log('success', f'{source}.__user_access_check__()', f'User({user_id_to_check}) is Owner({self.owner_id})')
+        if user_id_to_check == self.data['Owner']['id']:
+            LOGGER.log('success', f'{source}.__user_access_check__()', f'User({user_id_to_check}) is Owner({self.data['Owner']['id']:})')
             return True
 
-        # TODO: CHECK THIS WORKS
-        for entry in self.data['Access_Users']:
-            LOGGER.log('debug', f'{source}.__user_access_check__()', entry)
-            if entry == user_id_to_check:
-                LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Found')
-                if entry[access_type_to_check_for]:
-                    LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Correct Access Type({access_type_to_check_for})')
-                    return True
-        LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for})')
+        if str(user_id_to_check) in self.data['Access_Users'] and self.data['Access_Users'][str(user_id_to_check)][access_type_to_check_for]:
+            LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for})')
+            return True
+        LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for}) or was not found in Access_Users')
         return False
 
     async def __is_dictionary_private__(self) -> bool:
@@ -202,6 +251,18 @@ class Dictionary_Manager:
         self.data['Words'][word_to_add] = word_definition
         await self.__update_dictionary_data__()
 
+    async def remove_word_from_dictionary(self, interactor_id: int, word_to_remove: str) -> None:
+        """
+        :param interactor_id: User running the command
+        :param word_to_remove: Word to be removed from the dictionary
+        :return: None
+        """
+        if not await self.__user_access_check__(interactor_id, 'write'):
+            return
+
+        del self.data['Words'][word_to_remove]
+        await self.__update_dictionary_data__()
+
     async def get_random_word_from_dictionary(self, interactor_id: int) -> str:
         """
         :param interactor_id: User running the command
@@ -212,29 +273,3 @@ class Dictionary_Manager:
             raise Exception
 
         return random.choice(list(self.data['Words'].keys()))
-
-def make_dictionary(name: str, creator_id: int, creator_user: str, access_type: str) -> None:
-    """
-
-    :param name: Name of the Dictionary
-    :param creator_id: ID of the user making the dictionary
-    :param creator_user: Username of the user making the dictionary
-    :param access_type: Personal or Group
-    :return: None
-    """
-
-    dictionary_to_write: dict = empty_dictionary
-    dictionary_to_write['Name'] = name
-    dictionary_to_write['Creator']['id'] = creator_id
-    dictionary_to_write['Creator']['user'] = creator_user
-    dictionary_to_write['Access_Type'] = access_type
-
-    dictionary_directory: str = f'Automaton/dictionaries/{creator_id}/'
-    dictionary_file: str = f'{dictionary_directory}{name}.json'
-
-    if not os.path.isdir(dictionary_directory):
-        os.mkdir(dictionary_directory)
-
-    if not os.path.isfile(dictionary_file):
-        with open(dictionary_file, "w") as operate_file:
-            json.dump(dictionary_to_write, operate_file)

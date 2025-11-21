@@ -12,7 +12,7 @@ class Colors:
 class Logger:
     def __init__(self):
 
-        self.LOGS_DIRECTORY: str = 'logs/'
+        self.LOGS_DIRECTORY: str = 'Automaton/logs/'
         if os.path.isdir(self.LOGS_DIRECTORY):
             pass
         else:

@@ -24,11 +24,6 @@ class ConfigSetup:
         self.CONFIG_LOCATION: str = f'Automaton/config.json'
         self.DEFAULT_SETTINGS: dict = \
             {
-                'example_setting_0': 'a',
-                'example_setting_1': 'b',
-                'example_setting_2': 'c',
-                'example_setting_3': 'c',
-
                 'auto_sync'       : False,
                 'reconnect'       : False,
                 'prefix'          : ''
@@ -94,4 +89,3 @@ class ConfigSetup:
 
 if __name__ == '__main__':
     ConfigSetup: ConfigSetup = ConfigSetup()
-    
