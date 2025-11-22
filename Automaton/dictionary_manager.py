@@ -4,7 +4,6 @@ import uuid
 import random
 
 from logger import Logger
-LOGGER = Logger()
 source: str = 'dictionary_manager'
 
 empty_dictionary: dict = \
@@ -64,22 +63,23 @@ def set_users_target_dictionary_uuid(user_id: int, dictionary_uuid: str) -> None
     return None
 
 
-def get_users_target_dictionary_uuid(user_id: int) -> str:
+def get_users_target_dictionary_uuid(user_id: int, logger: Logger) -> str:
     target_dictionary_file: str = f'Automaton/dictionaries/{user_id}/target_dictionary.json'
     if os.path.isfile(target_dictionary_file):
         with open(target_dictionary_file, "r") as open_file:
             data: str = open_file.read()
-            LOGGER.log('debug', f'{source}.get_users_target_dictionary_uuid()', f'Data Found: {data}')
+            logger.log('debug', f'{source}.get_users_target_dictionary_uuid()', f'Data Found: {data}')
     else:
-        LOGGER.log('warn', f'{source}.get_users_target_dictionary_uuid()', '"target_dictionary_file" not found, please ensure the user has set a target dictionary already.')
+        logger.log('warn', f'{source}.get_users_target_dictionary_uuid()', '"target_dictionary_file" not found, please ensure the user has set a target dictionary already.')
         raise FileNotFoundError
 
     return data
 
 
 class Dictionary_Manager:
-    def __init__(self, interactor_id):
-        target_dictionary_uuid: str = get_users_target_dictionary_uuid(interactor_id)
+    def __init__(self, interactor_id, logger: Logger):
+        self.logger = logger
+        target_dictionary_uuid: str = get_users_target_dictionary_uuid(interactor_id, self.logger)
         self.file: str = f'Automaton/dictionaries/{target_dictionary_uuid}.json'
 
         try:
@@ -87,25 +87,24 @@ class Dictionary_Manager:
                 raise FileNotFoundError
 
         except FileNotFoundError as error_message:
-            LOGGER.log('error', f'{source}.init', f'{error_message}')
+            self.logger.log('error', f'{source}.init', f'{error_message}')
 
         except Exception as error_message:
-            LOGGER.log('error', f'{source}.init', f'{error_message}')
+            self.logger.log('error', f'{source}.init', f'{error_message}')
 
         with open(self.file, "r") as json_file:
             self.data: dict = json.load(json_file)
 
     async def __dictionary_exist_check__(self):
-        # TODO: proper exceptions
         try:
             if not os.path.isfile(self.file):
                 raise FileNotFoundError
 
         except FileNotFoundError as error_message:
-            LOGGER.log('error', f'{source}.__dictionary_exist_check__', f'{error_message}')
+            self.logger.log('error', f'{source}.__dictionary_exist_check__', f'{error_message}')
 
         except Exception as error_message:
-            LOGGER.log('error', f'{source}.__dictionary_exist_check__', f'{error_message}')
+            self.logger.log('error', f'{source}.__dictionary_exist_check__', f'{error_message}')
 
     async def __update_dictionary_data__(self) -> None:
         await self.__dictionary_exist_check__()
@@ -121,20 +120,21 @@ class Dictionary_Manager:
             raise ValueError
 
         if user_id_to_check == self.data['Owner']['id']:
-            LOGGER.log('success', f'{source}.__user_access_check__()', f'User({user_id_to_check}) is Owner({self.data['Owner']['id']:})')
+            self.logger.log('success', f'{source}.__user_access_check__()', f'User({user_id_to_check}) is Owner({self.data['Owner']['id']:})')
             return True
 
         if str(user_id_to_check) in self.data['Access_Users'] and self.data['Access_Users'][str(user_id_to_check)][access_type_to_check_for]:
-            LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for})')
+            self.logger.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for})')
             return True
-        LOGGER.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for}) or was not found in Access_Users')
+        self.logger.log('debug', f'{source}.__user_access_check__()', f'User ID({user_id_to_check}) Has The Incorrect Access Type({access_type_to_check_for}) or was not found in Access_Users')
         return False
 
     async def __is_dictionary_private__(self) -> bool:
-        # TODO: proper logging
         if self.data['Access_Type'] == 'group':
+            self.logger.log('debug', f'{source}.__is_dictionary_private__()', f'Dictionary {self.data['uuid']} Access Type Checked, found to be Group')
             return False
         else:
+            self.logger.log('debug', f'{source}.__is_dictionary_private__()', f'Dictionary {self.data['uuid']} Access Type Checked, found to be Personal')
             return True
 
     async def all_access_users(self) -> list:
@@ -182,15 +182,10 @@ class Dictionary_Manager:
         if new_access_type != 'personal' and new_access_type != 'group':
             raise ValueError(f'Invalid Access Type ({new_access_type}) passed to change_dictionary_access_type()')
 
-        previous_access_type: str = self.data['Access_Type']
-
         if self.data['Access_Type'] == 'personal':
             self.data['Access_Type'] = 'group'
         elif self.data['Access_Type'] == 'group':
             self.data['Access_Type'] = 'personal'
-        else:
-            self.data['Access_Type'] = previous_access_type
-            raise Exception('Invalid Access Type read during change_dictionary_access_type()')
 
         await self.__update_dictionary_data__()
         return None
@@ -210,6 +205,10 @@ class Dictionary_Manager:
             raise NotImplementedError('User doesnt have share perms')
 
         # TODO: check if the user is already in Access_Users
+
+        if str(new_access_user_id) in self.data['Access_Users'].keys():
+            self.logger.log('warn', f'{source}.give_user_access_to_dictionary()', f'User {new_access_user_id} already found in {self.data['uuid']}\'s Access_Users')
+            raise Exception
 
         self.data['Access_Users'][new_access_user_id] = {'user': new_access_user_name, 'read': True, 'write': False, 'share': False}
 
@@ -232,7 +231,7 @@ class Dictionary_Manager:
             if self.data['Access_Users'][str(remove_access_user_id)]:
                 pass
         except KeyError:
-            LOGGER.log('debug', f'{source}.__user_access_check__()', f'Key {remove_access_user_id} was not found in {self.data['Access_Users']}')
+            self.logger.log('debug', f'{source}.__user_access_check__()', f'Key {remove_access_user_id} was not found in {self.data['Access_Users']}')
             return
 
         del(self.data['Access_Users'][str(remove_access_user_id)])
@@ -269,7 +268,7 @@ class Dictionary_Manager:
         :return: The random word
         """
         if not await self.__user_access_check__(interactor_id, 'read'):
-            LOGGER.log('debug', f'{source}.get_random_word_from_dictionary()', 'Invalid Access to Dictionary.')
+            self.logger.log('debug', f'{source}.get_random_word_from_dictionary()', 'Invalid Access to Dictionary.')
             raise Exception
 
         return random.choice(list(self.data['Words'].keys()))
