@@ -61,7 +61,7 @@ class Logger:
                 self.log('warn', 'log', f'Invalid log_level passed to Logger.log, original log: ({log_level=} {source=} {log_message=})')
                 return
 
-        colorless_log_message: str = f'<{source}--> {log_message}'
+        colorless_log_message: str = f'<{datetime.datetime.now()}|{source}--> {log_message}'
         print(f'{log_color}{colorless_log_message}{Colors.NORMAL}')
         self.__log_to_logfile__(colorless_log_message, log_level)
 
