@@ -64,7 +64,7 @@ async def on_ready():
 @tree.command(name="set", description="Sets your target dictionary, this must be done before using the rest of the automaton.", guild=discord.Object(id=testing_guild_id))
 @discord.app_commands.describe(dictionary_uuid='Dictionary Unique ID')
 async def set_dictionary_command(interaction: discord.Interaction, dictionary_uuid: str):
-    dictionary_manager.set_users_target_dictionary_uuid(interaction.user.id, dictionary_uuid)
+    dictionary_manager.set_target_uuid(interaction.user.id, dictionary_uuid)
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
 
     response_embed = discord.Embed(title='Dictionary Target', description='', colour=0x00FF00)
@@ -85,7 +85,7 @@ async def set_dictionary_command(interaction: discord.Interaction, dictionary_uu
 ])
 async def create_dictionary_command(interaction: discord.Interaction, dictionary_name: str, access_type: app_commands.Choice[str]):
     dictionary_uuid: str = dictionary_manager.make_dictionary(dictionary_name, interaction.user.id, interaction.user.name, access_type.value)
-    dictionary_manager.set_users_target_dictionary_uuid(interaction.user.id, dictionary_uuid)
+    dictionary_manager.set_target_uuid(interaction.user.id, dictionary_uuid)
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
 
     response_embed = discord.Embed(title='Dictionary Creation', description='', colour=0x00FF00)
@@ -117,14 +117,14 @@ async def change_dictionary_access_type_command(interaction: discord.Interaction
 @discord.app_commands.describe(user_name='User Name')
 async def add_user_to_dictionary_command(interaction: discord.Interaction, user_id: str, user_name: str):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
-    await Dictionary_Manager.give_user_access_to_dictionary(interaction.user.id, int(user_id), user_name)
+    await Dictionary_Manager.add_user(interaction.user.id, int(user_id), user_name)
     await interaction.response.send_message(embed=await __user_access_change_embed_builder__(interaction, Dictionary_Manager))
 
 @tree.command(name="remove_user", description="Remove a user's access to a target dictionary.", guild=discord.Object(id=testing_guild_id))
 @discord.app_commands.describe(user_id='User ID')
 async def remove_user_from_dictionary_command(interaction: discord.Interaction, user_id: str):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
-    await Dictionary_Manager.remove_user_access_to_dictionary(interaction.user.id, int(user_id))
+    await Dictionary_Manager.remove_user(interaction.user.id, int(user_id))
     await interaction.response.send_message(embed=await __user_access_change_embed_builder__(interaction, Dictionary_Manager))
 
 # TODO: Change User Permissions Command
@@ -133,7 +133,7 @@ async def remove_user_from_dictionary_command(interaction: discord.Interaction, 
 @discord.app_commands.describe(word='Word')
 async def add_word_to_dictionary_command(interaction: discord.Interaction, word: str):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
-    await Dictionary_Manager.add_word_to_dictionary(interaction.user.id, word)
+    await Dictionary_Manager.add_word(interaction.user.id, word)
 
     response_embed = discord.Embed(title='Dictionary Access', description='', colour=0x00FF00)
     response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
@@ -148,7 +148,7 @@ async def add_word_to_dictionary_command(interaction: discord.Interaction, word:
 @discord.app_commands.describe(word='Word')
 async def remove_word_from_dictionary_command(interaction: discord.Interaction, word: str):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
-    await Dictionary_Manager.remove_word_from_dictionary(interaction.user.id, word)
+    await Dictionary_Manager.remove_word(interaction.user.id, word)
 
     response_embed = discord.Embed(title='Dictionary Access', description='', colour=0x00FF00)
     response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)
@@ -163,7 +163,7 @@ async def remove_word_from_dictionary_command(interaction: discord.Interaction, 
 @tree.command(name="random", description="Gets a random word from a target dictionary.", guild=discord.Object(id=testing_guild_id))
 async def random_command(interaction: discord.Interaction):
     Dictionary_Manager = dictionary_manager.Dictionary_Manager(interaction.user.id, logger)
-    random_word: str = await Dictionary_Manager.get_random_word_from_dictionary(interaction.user.id)
+    random_word: str = await Dictionary_Manager.random(interaction.user.id)
 
     response_embed = discord.Embed(title='Dictionary', description='', colour=0x00FF00)
     response_embed.set_footer(text=interaction.user.id, icon_url=interaction.user.display_avatar)

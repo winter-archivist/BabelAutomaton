@@ -27,12 +27,12 @@ class Dictionary_Change_Access_Type_View(discord.ui.View):
     async def set_to_personal(self, interaction, button):
         if not self.__interactor_is_owner_check__(interaction.user.id):
             return
-        await self.Dictionary_Manager.change_dictionary_access_type('personal')
+        await self.Dictionary_Manager.set_access_type('personal')
         await interaction.response.edit_message(embed=await self.__embed_builder__(interaction), view=self)
 
     @discord.ui.button(label='Set Dictionary To Group', style=discord.ButtonStyle.red, row=1)
     async def set_to_group(self, interaction, button):
         if not self.__interactor_is_owner_check__(interaction.user.id):
             return
-        await self.Dictionary_Manager.change_dictionary_access_type('group')
+        await self.Dictionary_Manager.set_access_type('group')
         await interaction.response.edit_message(embed=await self.__embed_builder__(interaction), view=self)

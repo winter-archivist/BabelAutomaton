@@ -51,7 +51,7 @@ def make_dictionary(name: str, owner_id: int, owner_user: str, access_type: str)
     return dictionary_uuid
 
 
-def set_users_target_dictionary_uuid(user_id: int, dictionary_uuid: str) -> None:
+def set_target_uuid(user_id: int, dictionary_uuid: str) -> None:
     user_directory: str = f'Automaton/dictionaries/{user_id}'
     if not os.path.isdir(user_directory):
         os.mkdir(user_directory)
@@ -63,7 +63,7 @@ def set_users_target_dictionary_uuid(user_id: int, dictionary_uuid: str) -> None
     return None
 
 
-def get_users_target_dictionary_uuid(user_id: int, logger: Logger) -> str:
+def get_target_uuid(user_id: int, logger: Logger) -> str:
     target_dictionary_file: str = f'Automaton/dictionaries/{user_id}/target_dictionary.json'
     if os.path.isfile(target_dictionary_file):
         with open(target_dictionary_file, "r") as open_file:
@@ -79,7 +79,7 @@ def get_users_target_dictionary_uuid(user_id: int, logger: Logger) -> str:
 class Dictionary_Manager:
     def __init__(self, interactor_id, logger: Logger):
         self.logger = logger
-        target_dictionary_uuid: str = get_users_target_dictionary_uuid(interactor_id, self.logger)
+        target_dictionary_uuid: str = get_target_uuid(interactor_id, self.logger)
         self.file: str = f'Automaton/dictionaries/{target_dictionary_uuid}.json'
 
         try:
@@ -106,10 +106,9 @@ class Dictionary_Manager:
         except Exception as error_message:
             self.logger.log('error', f'{source}.__dictionary_exist_check__', f'{error_message}')
 
-    async def __update_dictionary_data__(self) -> None:
+    async def __update__(self) -> None:
         await self.__dictionary_exist_check__()
 
-        # TODO: proper exceptions
         with open(self.file, "w") as operate_file:
             json.dump(self.data, operate_file)
 
@@ -143,54 +142,16 @@ class Dictionary_Manager:
             access_users.append(self.data['Access_Users'][access_id]['user'])
         return access_users
 
-    # ------ #
-    # I don't know if these will be needed, but I might as well write them now
-    async def all_read_access_users(self) -> list:
-        read_access_users: list = []
-        for access_id in self.data['Access_Users']:
+    async def set_access_type(self, access_type: str) -> None:
 
-            if read_access_users.append(self.data['Access_Users'][access_id]['read']):
-                continue
+        if access_type != 'personal' and access_type != 'group':
+            raise ValueError(f'Invalid Access Type ({access_type}) passed to change_dictionary_access_type()')
 
-            read_access_users.append(self.data['Access_Users'][access_id]['user'])
-        return read_access_users
-
-    async def all_write_access_users(self) -> list:
-        write_access_users: list = []
-        for access_id in self.data['Access_Users']:
-
-            if write_access_users.append(self.data['Access_Users'][access_id]['write']):
-                continue
-
-            write_access_users.append(self.data['Access_Users'][access_id]['user'])
-        return write_access_users
-
-    async def all_share_access_users(self) -> list:
-        share_access_users: list = []
-        for access_id in self.data['Access_Users']:
-
-            if share_access_users.append(self.data['Access_Users'][access_id]['share']):
-                continue
-
-            share_access_users.append(self.data['Access_Users'][access_id]['user'])
-        return share_access_users
-    # ------ #
-
-    async def change_dictionary_access_type(self, new_access_type: str) -> None:
-        # TODO: proper logging & exceptions
-
-        if new_access_type != 'personal' and new_access_type != 'group':
-            raise ValueError(f'Invalid Access Type ({new_access_type}) passed to change_dictionary_access_type()')
-
-        if self.data['Access_Type'] == 'personal':
-            self.data['Access_Type'] = 'group'
-        elif self.data['Access_Type'] == 'group':
-            self.data['Access_Type'] = 'personal'
-
-        await self.__update_dictionary_data__()
+        self.data['Access_Type'] == access_type
+        await self.__update__()
         return None
 
-    async def give_user_access_to_dictionary(self, interactor_id: int, new_access_user_id: int, new_access_user_name: str) -> None:
+    async def add_user(self, interactor_id: int, new_access_user_id: int, new_access_user_name: str) -> None:
         """
         :param interactor_id: User running the command
         :param new_access_user_id: The user id of the user being added to the dictionary
@@ -212,9 +173,9 @@ class Dictionary_Manager:
 
         self.data['Access_Users'][new_access_user_id] = {'user': new_access_user_name, 'read': True, 'write': False, 'share': False}
 
-        await self.__update_dictionary_data__()
+        await self.__update__()
 
-    async def remove_user_access_to_dictionary(self, interactor_id: int, remove_access_user_id: int) -> None:
+    async def remove_user(self, interactor_id: int, remove_access_user_id: int) -> None:
         """
         :param interactor_id: User running the command
         :param remove_access_user_id: The user id of the user being removed access to the dictionary
@@ -235,9 +196,9 @@ class Dictionary_Manager:
             return
 
         del(self.data['Access_Users'][str(remove_access_user_id)])
-        await self.__update_dictionary_data__()
+        await self.__update__()
 
-    async def add_word_to_dictionary(self, interactor_id: int, word_to_add: str, word_definition: str = 'No definition set.') -> None:
+    async def add_word(self, interactor_id: int, word_to_add: str, word_definition: str = 'No definition set.') -> None:
         """
         :param interactor_id: User running the command
         :param word_to_add: Word to be added to the dictionary
@@ -248,9 +209,9 @@ class Dictionary_Manager:
             return
 
         self.data['Words'][word_to_add] = word_definition
-        await self.__update_dictionary_data__()
+        await self.__update__()
 
-    async def remove_word_from_dictionary(self, interactor_id: int, word_to_remove: str) -> None:
+    async def remove_word(self, interactor_id: int, word_to_remove: str) -> None:
         """
         :param interactor_id: User running the command
         :param word_to_remove: Word to be removed from the dictionary
@@ -260,9 +221,9 @@ class Dictionary_Manager:
             return
 
         del self.data['Words'][word_to_remove]
-        await self.__update_dictionary_data__()
+        await self.__update__()
 
-    async def get_random_word_from_dictionary(self, interactor_id: int) -> str:
+    async def random(self, interactor_id: int) -> str:
         """
         :param interactor_id: User running the command
         :return: The random word
