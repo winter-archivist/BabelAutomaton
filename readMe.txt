@@ -40,8 +40,8 @@ To enter the venv run
 Once in the virtual environment, run this once to install all requirements
     python -m pip install -r requirements.txt
 
-Before running the automaton make sure to run config_setup.py
-    python config_setup.py
+Before running the automaton make sure to run configSetup.py
+    python configSetup.py
 
 Once the config is generated, ensure the automaton's token is in a file named ".client.secret" in the Automaton/ directory
 The client's token is found under the Bot section of the discord dev portal. !DO NOT SHARE THIS TOKEN!

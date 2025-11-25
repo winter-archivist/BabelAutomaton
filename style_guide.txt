@@ -1,0 +1,5 @@
+ClassHere
+functionHere
+__protectedFunctionHere__
+variable_here
+fileName
